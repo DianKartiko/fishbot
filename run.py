@@ -1,8 +1,4 @@
-# run.py
-
-from bot.main import start_bot
-from database.db import create_tables
+from bot.main import app  # Impor Flask app
 
 if __name__ == "__main__":
-    create_tables()
-    start_bot()
+    app.run(host="0.0.0.0", port=8080)

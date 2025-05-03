@@ -1,2 +1,1 @@
-URL = "https://fishbot.fly.dev"
 BOT_TOKEN = "7859479447:AAF7HAv91DcdIWZQOtiFQY8ovW-ZvSqz_Ck"
