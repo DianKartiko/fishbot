@@ -1,5 +1,5 @@
 from telegram import Update
-from telegram.ext import CallbackContext
+from telegram.ext import CallbackContext, ConversationHandler,  MessageHandler, Filters, CommandHandler 
 from database.db import get_all_pengeluaran, update_pengeluaran, get_all_pendapatan, update_pendapatan
 from telegram.ext import ConversationHandler
 
@@ -18,7 +18,7 @@ def show_data(update: Update, context: CallbackContext):
 
     text = "Pilih data yang ingin diedit:\n\n"
     for idx, (data_type, item) in enumerate(all_data):
-        text += f"{idx + 1}. ({data_type.upper()}) {item[1]} - {item[2]} - {item[3]}\n"
+        text += f"{idx + 1}. ({data_type.title()}) {item[1]} - {item[2]} - {item[3]}\n"
 
     context.user_data["all_data"] = all_data
     update.message.reply_text(text)
@@ -109,3 +109,17 @@ def edit_tanggal(update: Update, context: CallbackContext):
 def cancel(update: Update, context: CallbackContext):
     update.message.reply_text("Proses edit data dibatalkan.")
     return ConversationHandler.END
+
+
+# Editing Data Untuk Data yang salah
+conv_handler_edit_data = ConversationHandler(
+    entry_points=[CommandHandler('edit_data', show_data)],
+    states={
+        SELECT_DATA: [MessageHandler(Filters.text & ~Filters.command, select_data)],
+        EDIT_ATTRIBUTE: [MessageHandler(Filters.text & ~Filters.command, edit_attribute)],
+        EDIT_KETERANGAN: [MessageHandler(Filters.text & ~Filters.command, edit_keterangan)],
+        EDIT_HARGA: [MessageHandler(Filters.text & ~Filters.command, edit_harga)],
+        EDIT_TANGGAL: [MessageHandler(Filters.text & ~Filters.command, edit_tanggal)],
+    },
+    fallbacks=[CommandHandler('cancel', cancel)],
+)

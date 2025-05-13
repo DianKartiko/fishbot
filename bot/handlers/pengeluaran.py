@@ -1,6 +1,6 @@
 # bot/handlers/pengeluaran.py
 from telegram import Update
-from telegram.ext import CallbackContext, ConversationHandler
+from telegram.ext import CallbackContext, ConversationHandler,  MessageHandler, Filters, CommandHandler
 from database.db import save_pengeluaran
 
 # Define stages
@@ -47,3 +47,16 @@ def receive_tanggal(update: Update, context: CallbackContext):
 def cancel(update: Update, context: CallbackContext):
     update.message.reply_text("Pencatatan pengeluaran dibatalkan.")
     return ConversationHandler.END
+
+
+conv_handler_pengeluaran = ConversationHandler(
+    entry_points=[CommandHandler('input_pengeluaran', start_input_pengeluaran)],
+    states={
+        KETERANGAN: [MessageHandler(Filters.text & ~Filters.command, receive_keterangan)],
+        HARGA: [MessageHandler(Filters.text & ~Filters.command, receive_harga)],
+        TANGGAL: [MessageHandler(Filters.text & ~Filters.command, receive_tanggal)],
+    },
+    fallbacks=[CommandHandler('cancel', cancel)],
+)
+
+

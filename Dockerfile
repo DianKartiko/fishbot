@@ -12,4 +12,4 @@ FROM python:3.10.9-slim
 WORKDIR /app
 COPY --from=builder /app/.venv .venv/
 COPY . .
-CMD ["/app/.venv/bin/python", "run.py", "--host=0.0.0.0", "--port=8080"]
+CMD ["/app/.venv/bin/python", "main.py", "--host=0.0.0.0", "--port=8080"]

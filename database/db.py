@@ -83,13 +83,6 @@ def update_pengeluaran(id, keterangan, harga, tanggal):
     conn.commit()
     conn.close()
 
-def delete_all_pengeluaran():
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM pengeluaran")
-    conn.commit()
-    conn.close()
-
 def get_all_pengeluaran_history():
     conn = get_connection()
     cursor = conn.cursor()
@@ -129,13 +122,6 @@ def update_pendapatan(id, keterangan, total, tanggal):
     conn.commit()
     conn.close()
 
-def delete_all_pendapatan():
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM pendapatan")
-    conn.commit()
-    conn.close()
-
 def get_all_pendapatan_history():
     conn = get_connection()
     cursor = conn.cursor()
@@ -144,25 +130,88 @@ def get_all_pendapatan_history():
     conn.close()
     return data
 
+# ---------------- Deleting  ----------------
+def delete_all():
+    items = ['pendapatan', 'pengeluaran', 'pendapatan_history', 'pengeluaran_history']
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        for item in items:
+            cursor.execute(f'DELETE FROM {item}')
+            # Reset auto-increment ID untuk SQLite
+            cursor.execute(f"DELETE FROM sqlite_sequence WHERE name = '{item}'")
+        conn.commit()
+        print("Semua data dan ID berhasil direset!")
+    except Exception as e:
+        conn.rollback()
+        print(f"Error: {e}")
+    finally:
+        conn.close()
+
+def delete_item(table_name: str, item_id: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        # Hapus data dari tabel utama
+        cursor.execute(f'''
+            DELETE FROM {table_name}
+            WHERE id = ?
+        ''', (item_id,))
+        
+        # Jika ingin pindahkan ke history (opsional)
+        cursor.execute(f'''
+            INSERT INTO {table_name}_history
+            SELECT * FROM {table_name} WHERE id = ?
+        ''', (item_id,))
+        
+        conn.commit()
+        print(f"✅ Data ID {item_id} di {table_name} berhasil dihapus!")
+        return True
+    except Exception as e:
+        conn.rollback()
+        print(f"❌ Gagal menghapus data: {str(e)}")
+        return False
+    finally:
+        conn.close()
+
 # ---------------- Utility ----------------
 
 def move_to_history():
     conn = get_connection()
     cursor = conn.cursor()
+    
+    try:
+        # Mulai transaksi
+        cursor.execute("BEGIN TRANSACTION")
 
-    # Pindahkan pengeluaran ke history
-    cursor.execute('''
-        INSERT INTO pengeluaran_history (keterangan, harga, tanggal)
-        SELECT keterangan, harga, tanggal FROM pengeluaran
-    ''')
-    cursor.execute("DELETE FROM pengeluaran")
+        # 1. Pindahkan data pengeluaran ke history
+        cursor.execute('''
+            INSERT INTO pengeluaran_history (keterangan, harga, tanggal)
+            SELECT keterangan, harga, tanggal FROM pengeluaran
+        ''')
+        cursor.execute("DELETE FROM pengeluaran")  # Kosongkan tabel utama
 
-    # Pindahkan pendapatan ke history
-    cursor.execute('''
-        INSERT INTO pendapatan_history (keterangan, total, tanggal)
-        SELECT keterangan, total, tanggal FROM pendapatan
-    ''')
-    cursor.execute("DELETE FROM pendapatan")
+        # 2. Pindahkan data pendapatan ke history
+        cursor.execute('''
+            INSERT INTO pendapatan_history (keterangan, total, tanggal)
+            SELECT keterangan, total, tanggal FROM pendapatan
+        ''')
+        cursor.execute("DELETE FROM pendapatan")  # Kosongkan tabel utama
 
-    conn.commit()
-    conn.close()
+        # 3. Reset auto-increment ID untuk tabel utama
+        cursor.execute('''
+            DELETE FROM sqlite_sequence 
+            WHERE name IN ('pengeluaran', 'pendapatan')
+        ''')
+
+        # Commit semua perubahan
+        conn.commit()
+        print("✅ Data berhasil dipindahkan ke history + ID direset!")
+
+    except Exception as e:
+        conn.rollback()
+        print(f"❌ Error saat memindahkan data: {str(e)}")
+        raise  # Re-raise exception untuk handling di level atas
+
+    finally:
+        conn.close()

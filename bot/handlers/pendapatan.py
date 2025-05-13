@@ -1,5 +1,5 @@
 from telegram import Update
-from telegram.ext import CallbackContext, ConversationHandler
+from telegram.ext import CallbackContext, ConversationHandler,MessageHandler, Filters, CommandHandler
 from database.db import save_pendapatan
 
 # Tahapan input
@@ -50,3 +50,14 @@ def receive_tanggal(update: Update, context: CallbackContext):
 def cancel(update: Update, context: CallbackContext):
     update.message.reply_text("Input pendapatan dibatalkan.")
     return ConversationHandler.END
+
+# Handler untuk pendapatan 
+conv_handler_pendapatan = ConversationHandler(
+    entry_points=[CommandHandler('input_pendapatan', start_input_pendapatan)],
+    states={
+        KETERANGAN: [MessageHandler(Filters.text & ~Filters.command, receive_keterangan)],
+        TOTAL: [MessageHandler(Filters.text & ~Filters.command, receive_total)],
+        TANGGAL: [MessageHandler(Filters.text & ~Filters.command, receive_tanggal)],
+    },
+    fallbacks=[CommandHandler('cancel', cancel)],
+)
