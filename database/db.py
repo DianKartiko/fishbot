@@ -1,7 +1,9 @@
 import sqlite3
 import os
 
-DB_NAME = "fishora.db"
+os.makedirs("/data", exist_ok=True)
+
+DB_NAME = "/data/fishora.db"
 
 def get_connection():
     return sqlite3.connect(DB_NAME)

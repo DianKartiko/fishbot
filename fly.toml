@@ -25,3 +25,8 @@ primary_region = 'sin'
     port = 8080
     interval = "30s"
     timeout = "5s"
+
+[mounts]
+  source="database"
+  destination="/data"
+

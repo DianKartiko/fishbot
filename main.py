@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 from bot.dispatcher import setup_dispatcher
 
-load_dotenv('.env')
+load_dotenv()
 API_KEY = os.getenv('API_KEY')
 
 app = Flask(__name__)
@@ -28,9 +28,11 @@ def index():
 
 if __name__ == "__main__":
     # Untuk development lokal (polling)
-    # updater.start_polling()
-    # print('Bot is running locally with polling...')
-    # updater.idle()
+    # try: 
+    #     updater.start_polling()
+    #     updater.idle()
+    # except Exception as e: 
+    #     Logger.critical_error(e)
 
     # Untuk production (webhook)
     URL = os.getenv('URL')
